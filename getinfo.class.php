@@ -1,18 +1,31 @@
 <?php
+/** 
+* 获取IP与位置信息
+* 
+* 用于配合QQ机器人检测窥屏插件
+* 
+* @author      lt_name<admin@lanink.cn>
+*/ 
 if(!defined('CORE_OK'))exit();
 class getinfo{
-	public $id=null;
+	public $id=0;
 	public $usip=null;
 	public $uswz=null;
 	public $sysinfo=null;
-	public $txtpath=null;
-	public $isnew=false;
-	
-	function setid($info){
-		$this->id = $info;
+	public $txt=null;
+	/**  
+	* 设置记录文件ID
+	* 
+	* @param mixed $id 文件ID
+	*/
+	public function set_id($id=0){
+		$this->id = $id;
 	}
-	
-	function getip(){
+	/**  
+	* 获取访问者IP
+	* 
+	*/
+	public function get_ip(){
 		if (isset($_SERVER)){
 			if (isset($_SERVER["HTTP_X_FORWARDED_FOR"])){
 				$this->usip = $_SERVER["HTTP_X_FORWARDED_FOR"];
@@ -31,63 +44,85 @@ class getinfo{
 			}
 		}
 	}
-	
-	function getwz(){
+	/**  
+	* 查询IP位置
+	* 
+	* @param mixed $ip 要查询的IP
+	*/
+	public function get_wz($ip=null){
+		if($ip!=null){
+			$this->usip = $ip;
+		}
 		$str=file_get_contents("http://m.ip138.com/ip.asp?ip={$this->usip}");
 		$a=explode('本站主数据：', $str)[1];
 		$b=explode('</p><p class="result">',$a)[0];
 		$this->uswz=explode('<br/></p>',$b)[0];
 	}
-	
-	function setsysinfo($info){
-		$this->sysinfo = $info;
+	/**  
+	* 获取浏览器及设备信息（暂未使用）
+	* 
+	*/
+	public function get_sysinfo(){
+		//$this->sysinfo = $info;
 	}
-	
-	function get(){
-		getinfo::getip();
-		getinfo::getwz();
+	/**  
+	* 获取IP与位置信息
+	* 
+	*/
+	public function get_all(){
+		self::get_ip();
+		self::get_wz();
 	}
-	
-	function settxtpath($path,$see=false){
-		$txt = $path.$this->id.".txt";
-		if($see==true){
-			$this->txtpath = fopen($txt,"rb");
-		}else{
-			if(!file_exists($txt)){
-				$this->isnew = true;
-			}else{
-				$txt_info = fopen($txt,"rb");
-				$ctime=(int)fgets($txt_info,9);
-				fclose($txt_info);
-				if((date("mdhi") - $ctime) > 3){
-					unlink($txt);
-					$this->isnew = true;
-				}
-			}
-			$this->txtpath = fopen($txt,"ab");
-		}
+	/**  
+	* 设置文件保存路径
+	* 
+	* @param mixed $path 保存路径
+	*/
+	public function set_txt_path($path){
+		$this->txt = $path.$this->id.".txt";
 	}
-	
-	function save(){
-		if($this->txtpath!=null){
-			if($this->isnew){
+	/**  
+	* 保存信息
+	* 
+	*/
+	public function save_txt(){
+		if($this->txt!=null){
+			if(!file_exists($this->txt)){
 				$log = date("mdhis")."\r\nIP:".$this->usip."\r\n位置:".$this->uswz."\r\n";
 			}else{
-				$log = "\r\nIP:".$this->usip."\r\n位置:".$this->uswz."\r\n";
+				$txt_time = fopen($this->txt,"rb");
+				$ctime=(int)fgets($txt_time,9);
+				fclose($txt_time);
+				if((date("mdhi") - $ctime) > 3){
+					unlink($this->txt);
+					$log = date("mdhis")."\r\nIP:".$this->usip."\r\n位置:".$this->uswz."\r\n";
+				}else{
+					$log = "\r\nIP:".$this->usip."\r\n位置:".$this->uswz."\r\n";
+				}
 			}
-			fwrite($this->txtpath,$log,strlen($log));
-			fclose($this->txtpath);
+			$txt = fopen($this->txt,"ab");
+			fwrite($txt,$log,strlen($log));
+			fclose($txt);
+		}else{
+			return '未设置文件路径';
 		}
 	}
-	
-	function seeinfo(){
-		if($this->txtpath!=null){
-			while(! feof($this->txtpath))  {
-				$result .= fgets($this->txtpath)."\n";
+	/**  
+	* 查看信息
+	* 
+	*/
+	public function see_txt(){
+		if($this->txt!=null){
+			if(file_exists($this->txt)){
+				$txt = fopen($this->txt,"rb");
+				$result = fread($txt, filesize($this->txt));
+				fclose($txt);
+				return $result;
+			}else{
+				return '文件不存在';
 			}
-			return $result;
 		}else{
-			return '文件不存在';
+			return '未设置文件路径';
 		}
 	}
 }
