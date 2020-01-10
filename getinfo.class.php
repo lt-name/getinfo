@@ -63,7 +63,7 @@ class getinfo{
 	* 
 	*/
 	public function get_sysinfo(){
-		//$this->sysinfo = $info;
+		
 	}
 	/**  
 	* 获取IP与位置信息
@@ -88,21 +88,22 @@ class getinfo{
 	public function save_txt(){
 		if($this->txt!=null){
 			if(!file_exists($this->txt)){
-				$log = date("mdhis")."\r\nIP:".$this->usip."\r\n位置:".$this->uswz."\r\n";
+				$log = date("ymdhi").PHP_EOL."IP:".$this->usip.PHP_EOL."位置:".$this->uswz.PHP_EOL;
 			}else{
 				$txt_time = fopen($this->txt,"rb");
-				$ctime=(int)fgets($txt_time,9);
+				$ctime=(int)fgets($txt_time,11);
 				fclose($txt_time);
-				if((date("mdhi") - $ctime) > 3){
+				if((date("ymdhi") - $ctime) > 3){ //超过三分钟重新记录
 					unlink($this->txt);
-					$log = date("mdhis")."\r\nIP:".$this->usip."\r\n位置:".$this->uswz."\r\n";
+					$log = date("ymdhi").PHP_EOL."IP:".$this->usip.PHP_EOL."位置:".$this->uswz.PHP_EOL;
 				}else{
-					$log = "\r\nIP:".$this->usip."\r\n位置:".$this->uswz."\r\n";
+					$log = PHP_EOL."IP:".$this->usip.PHP_EOL."位置:".$this->uswz.PHP_EOL;
 				}
 			}
 			$txt = fopen($this->txt,"ab");
 			fwrite($txt,$log,strlen($log));
 			fclose($txt);
+			return true;
 		}else{
 			return '未设置文件路径';
 		}
